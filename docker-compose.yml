@@ -1,0 +1,45 @@
+version: '3.1'
+
+services:
+  postgres:
+    image: postgres:10
+    restart: always
+    volumes:
+      - /home/rperesy/proftest-data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+  app:
+    restart: always
+    image: ruslanperesy/pythonclassic:latest
+    ports:
+     - "5000:5000"
+    depends_on:
+     - postgres
+    volumes:
+      - .:/app
+      - /srv/git/pythonclassic:/srv/git
+    environment:
+      - DATABASE_URI=${DB_URI}
+      - DEDICATED_DATABASE_USER=${DDB_USER}
+      - DEDICATED_DATABASE_PASSWORD=${DDB_PASSWORD}
+      - DEDICATED_DATABASE_HOST=${DDB_HOST}
+      - DEDICATED_DATABASE_NAME=${DDB_NAME}
+      - SECRET_KEY=${SECRET}
+      - ALLOWED_ORIGINS=${CORS_LIST}
+      - SERVER_NAME=${SERVER_NAME}
+      - ADMIN_PASSWORD_SALT=${ADMIN_PASSWORD_SALT}
+      - SSH_KEY_NAME=id_rsa
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - PUBLIC_GIT_REPO=${PUBLIC_GIT_REPO}
+  # dedicated_db:
+  #  image: postgres:10
+  #  restart: always
+  #  ports:
+  #    - "5432:5432"
+  #  volumes:
+  #    - /home/rperesy/proftest-data/dedicated_db:/var/lib/postgresql/data
+  #  environment:
+  #    - POSTGRES_USER=${DDB_USER}
+  #    - POSTGRES_PASSWORD=${DDB_PASSWORD}
