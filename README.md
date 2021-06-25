@@ -1,4 +1,4 @@
-# proftest-back
+# Backend for https://dev.pythonclassic.com
 class Assessment
    <br/>
   categories = []
