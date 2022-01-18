@@ -18,7 +18,7 @@ def receive_notification():
 
         feedback = Feedback.get(feedback_id, user_id)
         score = feedback.score + (50 if state in ('PASSED', 'FIXED') else 0)
-        feedback.update(state=state, score=score)
+        feedback.update(state=state, score=score, build_url=test_result['build_url'])
 
         logger.info(
             f'user:{user_id} feedback:{feedback_id} test result received: {state}')
