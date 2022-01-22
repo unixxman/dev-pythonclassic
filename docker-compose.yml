@@ -1,17 +1,17 @@
 version: '3.1'
 
 app-variables: &env-variables
-  - DATABASE_URI=${DB_URI}
-  - SECRET_KEY=${SECRET}
-  - ALLOWED_ORIGINS=${CORS_LIST}
-  - SERVER_NAME=${SERVER_NAME}
-  - ADMIN_PASSWORD_SALT=${ADMIN_PASSWORD_SALT}
-  - SSH_KEY_NAME=id_rsa
-  - ADMIN_EMAIL=${ADMIN_EMAIL}
-  - EMAIL_PASSWORD=${EMAIL_PASSWORD}
-  - PUBLIC_GIT_REPO=${PUBLIC_GIT_REPO}
-  - PUBLIC_GIT_REPO_URL=${PUBLIC_GIT_REPO_URL}
-  - REDIS_URL=${REDIS_URL}
+  DATABASE_URI: ${DB_URI}
+  SECRET_KEY: ${SECRET}
+  ALLOWED_ORIGINS: ${CORS_LIST}
+  SERVER_NAME: ${SERVER_NAME}
+  ADMIN_PASSWORD_SALT: ${ADMIN_PASSWORD_SALT}
+  SSH_KEY_NAME: id_rsa
+  ADMIN_EMAIL: ${ADMIN_EMAIL}
+  EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+  PUBLIC_GIT_REPO: ${PUBLIC_GIT_REPO}
+  PUBLIC_GIT_REPO_URL: ${PUBLIC_GIT_REPO_URL}
+  REDIS_URL: ${REDIS_URL}
 
 services:
   postgres:
@@ -55,6 +55,6 @@ services:
     image: ruslanperesy/rq-dashboard:latest
     ports:
       - 9181:9181
-    command: rq-dashboard -H redis --user ${RQ_DASHBOARD_USER} --password ${RQ_DASHBOARD_PASSWORD}
+    command: rq-dashboard -H redis --username ${RQ_DASHBOARD_USER} --password ${RQ_DASHBOARD_PASSWORD}
     depends_on:
       - redis
