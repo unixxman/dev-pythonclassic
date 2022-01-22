@@ -1,25 +1,23 @@
-from threading import Thread
 from proftest import logger
+from proftest.config import Config
 from .gitflow import Gitflow
 
 
 class Repo:
-    def __init__(self, user_id):
-        self.feature_name = None
-        self.worktree = None
-        self._thread = Thread(target=self._apply_changes)
+    def __init__(self, worktree):
+        self._worktree = worktree
+        self._url = Config.REPO_URL
 
-    def async_update(self, worktree, feature_name):
-        self.worktree = worktree
-        self.feature_name = feature_name
-        self._thread.start()
+    def push_new_branch(self, assessment, feature_name):
+        self._apply_changes(assessment, feature_name)
+        return self._worktree.head_url
 
-    def _apply_changes(self):
-        gitflow = Gitflow(self.worktree.repo_local, self.feature_name)
+    def _apply_changes(self, assessment, feature_name):
+        gitflow = Gitflow(self._worktree.repo_local, feature_name)
         gitflow.set_local_branch()
         with gitflow.flow() as repo:
             try:
-                self.worktree.write()
+                self._worktree.write(assessment)
                 if repo.head_is_unborn:
                     parent = []
                 else:
@@ -30,6 +28,7 @@ class Repo:
 
                 repo.create_commit('HEAD', user, user, 'message', tree, parent)
                 repo.index.write()
+                self._worktree.head_url = f'{self._url}/tree/{feature_name}'
             except Exception as e:
-                logger.error(f'failed to write changes to {self.feature_name} {e}')
-                self.worktree.clean()
+                logger.error(f'failed to write changes to {feature_name} {e}')
+                self._worktree.clean()

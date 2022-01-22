@@ -1,7 +1,9 @@
 import os
 import logging
+import warnings
+import redis
 import sqlalchemy as db
-from flask import Flask
+from flask import Flask, current_app, g
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,6 +16,7 @@ from flask_apispec.extension import FlaskApiSpec
 from flask_cors import CORS
 from flask_mail import Mail
 from pathlib import Path
+from rq import push_connection, pop_connection, Connection, Worker
 
 from .config import Config
 from .admin_view import AdminView
@@ -44,6 +47,14 @@ mail = Mail()
 from .admin_panel.utils import user_datastore
 
 
+def get_redis_connection():
+    redis_connection = getattr(g, '_redis_connection', None)
+    if redis_connection is None:
+        redis_url = current_app.config['REDIS_URL']
+        redis_connection = g._redis_connection = redis.from_url(redis_url)
+    return redis_connection
+
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -67,6 +78,14 @@ def create_app():
         'APISPEC_SWAGGER_URL': '/swagger/'
     })
 
+    @app.before_request
+    def push_rq_connection():
+        push_connection(get_redis_connection())
+
+    @app.teardown_request
+    def pop_rq_connection(exception=None):
+        pop_connection()
+
     @app.teardown_appcontext
     def shutdown_session(exception=None):
         session.remove()
@@ -81,6 +100,11 @@ def create_app():
     app.register_blueprint(admin_panel)
     app.register_blueprint(scm, subdomain='scm')
 
+    warnings.filterwarnings(
+        "ignore",
+        message="Multiple schemas resolved to the name "
+    )
+
     docs.init_app(app)
     jwt.init_app(app)
     cors.init_app(app)
@@ -88,6 +112,14 @@ def create_app():
     admin.init_app(app, index_view=AssessmentAdminView(
         Assessment, session, url='/panel'))
     security.init_app(app, user_datastore)
+
+    @app.cli.command('runworker')
+    def runworker_command():
+        redis_connection = redis.from_url(app.config['REDIS_URL'])
+        with Connection(redis_connection):
+            worker = Worker(app.config['QUEUES'])
+            print('***** Running RQ worker... *****', flush=True)
+            worker.work()
 
     return app
 

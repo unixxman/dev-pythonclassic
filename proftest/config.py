@@ -17,6 +17,7 @@ class Config:
     GIT_ROOT = '/srv/git'
     REPO_REMOTE = os.environ.get('PUBLIC_GIT_REPO')
     REPO_NAME = 'entipy'
+    REPO_URL = os.environ.get('PUBLIC_GIT_REPO_URL', 'https://github.com/rperesy/entipy')
     GIT_SSH_KEY_PUBLIC = os.path.expanduser(
         f'~/.ssh/{os.environ.get("SSH_KEY_NAME")}.pub')
     GIT_SSH_KEY_PRIVATE = os.path.expanduser(
@@ -27,3 +28,5 @@ class Config:
     MAIL_PORT = 465
     MAIL_USE_SSL = True
     FRONTEND_URL = 'https://dev.pythonclassic.com'
+    REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
+    QUEUES = ['default']

@@ -4,9 +4,8 @@ from flask_apispec import use_kwargs, marshal_with
 from proftest import docs
 from proftest.models import Assessment, Question
 from proftest.models import Feedback
-from proftest.scm.repo import Repo
-from proftest.scm.worktree import Worktree
 from proftest.users.utils import check_identity
+from proftest.scm.handlers import GitJobHandler
 from .utils import get_proficiency
 
 from proftest.schemas import (
@@ -56,10 +55,7 @@ class AssessmentDetailedView(BaseView):
             state='PENDING'
         )
         feedback.save()
-        worktree = Worktree(assessment, g.user_id)
-        repo = Repo(g.user_id)
-        repo.async_update(
-            worktree, f'assess-{g.user_id}-{feedback.id}')
+        GitJobHandler(assessment.id, feedback.id, g.user_id).run()
         return {'data': assessment}
 
     @jwt_required

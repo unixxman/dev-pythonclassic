@@ -1,5 +1,18 @@
 version: '3.1'
 
+app-variables: &env-variables
+  - DATABASE_URI=${DB_URI}
+  - SECRET_KEY=${SECRET}
+  - ALLOWED_ORIGINS=${CORS_LIST}
+  - SERVER_NAME=${SERVER_NAME}
+  - ADMIN_PASSWORD_SALT=${ADMIN_PASSWORD_SALT}
+  - SSH_KEY_NAME=id_rsa
+  - ADMIN_EMAIL=${ADMIN_EMAIL}
+  - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+  - PUBLIC_GIT_REPO=${PUBLIC_GIT_REPO}
+  - PUBLIC_GIT_REPO_URL=${PUBLIC_GIT_REPO_URL}
+  - REDIS_URL=${REDIS_URL}
+
 services:
   postgres:
     image: postgres:10
@@ -16,30 +29,32 @@ services:
      - "5000:5000"
     depends_on:
      - postgres
+     - redis
     volumes:
       - .:/app
       - /srv/git/pythonclassic:/srv/git
     environment:
-      - DATABASE_URI=${DB_URI}
-      - DEDICATED_DATABASE_USER=${DDB_USER}
-      - DEDICATED_DATABASE_PASSWORD=${DDB_PASSWORD}
-      - DEDICATED_DATABASE_HOST=${DDB_HOST}
-      - DEDICATED_DATABASE_NAME=${DDB_NAME}
-      - SECRET_KEY=${SECRET}
-      - ALLOWED_ORIGINS=${CORS_LIST}
-      - SERVER_NAME=${SERVER_NAME}
-      - ADMIN_PASSWORD_SALT=${ADMIN_PASSWORD_SALT}
-      - SSH_KEY_NAME=id_rsa
-      - ADMIN_EMAIL=${ADMIN_EMAIL}
-      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
-      - PUBLIC_GIT_REPO=${PUBLIC_GIT_REPO}
-  # dedicated_db:
-  #  image: postgres:10
-  #  restart: always
-  #  ports:
-  #    - "5432:5432"
-  #  volumes:
-  #    - /home/rperesy/proftest-data/dedicated_db:/var/lib/postgresql/data
-  #  environment:
-  #    - POSTGRES_USER=${DDB_USER}
-  #    - POSTGRES_PASSWORD=${DDB_PASSWORD}
+      <<: *env-variables
+  worker:
+    restart: always
+    image: ruslanperesy/pythonclassic:latest
+    depends_on:
+     - postgres
+     - redis
+    volumes:
+      - .:/app
+      - /srv/git/pythonclassic:/srv/git
+    environment:
+      <<: *env-variables
+    command: make worker
+  redis:
+    redis:
+    image: redis:6.2-alpine
+  dashboard:
+    build: ./dashboard
+    image: ruslanperesy/rq-dashboard:latest
+    ports:
+      - 9181:9181
+    command: rq-dashboard -H redis --user ${RQ_DASHBOARD_USER} --password ${RQ_DASHBOARD_PASSWORD}
+    depends_on:
+      - redis
