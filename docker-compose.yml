@@ -48,7 +48,6 @@ services:
       <<: *env-variables
     command: make worker
   redis:
-    redis:
     image: redis:6.2-alpine
   dashboard:
     build: ./dashboard
