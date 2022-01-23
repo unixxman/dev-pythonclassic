@@ -12,7 +12,7 @@ class GitJobHandler:
         self.repo = Repo(Worktree(user_id))
         self.feature_name = f'assess-{user_id}-{feedback_id}'
 
-    def execute(self):
+    def execute(self):  # TODO: delete session at the end of method
         branch_url = self.repo.push_new_branch(
             Assessment.query.get(self._assessment_id),
             self.feature_name)

@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import g
 from flask_mail import Message
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, get_jwt_claims
 from proftest import mail
 from proftest.config import Config
 from proftest.models import User
@@ -112,9 +112,20 @@ class Notifier:
 def check_identity(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
-        g.user_id = get_jwt_identity()
+        if not getattr(g, 'user_id', None):
+            g.user_id = get_jwt_identity()
         user = User.query.get(g.user_id)
         if not user.email_confirmed:
             raise PermissionError(f'user:{g.user_id} email is not confirmed')
         return fn(g.user_id, *args, **kwargs)
+    return wrapper
+
+
+def set_claims(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not getattr(g, 'user_id', None):
+            g.user_id = get_jwt_identity()
+        g.roles = get_jwt_claims().get('roles', [])
+        return fn(*args, **kwargs)
     return wrapper

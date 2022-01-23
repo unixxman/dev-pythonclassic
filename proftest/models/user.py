@@ -4,6 +4,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask_jwt_extended import create_access_token
 from sqlalchemy.orm.exc import NoResultFound
 from proftest import db
+from proftest.schemas.role_schema import RoleSchema
 from .base_model import BaseModel
 from .feedback import Feedback
 from .role import roles_to_users
@@ -38,7 +39,8 @@ class User(BaseModel):
         expire_delta = timedelta(expire_time)
         token = create_access_token(
             identity=self.id,
-            expires_delta=expire_delta
+            expires_delta=expire_delta,
+            user_claims={'roles': RoleSchema(many=True).dump(self.roles)}
         )
         return token
 

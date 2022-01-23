@@ -20,6 +20,7 @@ class Assessment(BaseModel):
     description = db.Column(db.String(1000), nullable=False)
     average_duration = db.Column(db.Integer, nullable=False)
     level = db.Column(db.Enum(ComplexityLevel), nullable=False)
+    public = db.Column(db.Boolean)
     candidates = db.orm.relationship(
         'User', secondary=Feedback.__table__,
         back_populates='assessments', lazy=True)
@@ -40,6 +41,20 @@ class Assessment(BaseModel):
             Feedback.assessment_id == self.id,
             Feedback.candidate_id == g.user_id,
             Feedback.state != 'CANCELED').first()
+
+    @staticmethod
+    def get_filters():
+        filters = []
+        if not any(r['name'] == 'qa' for r in getattr(g, 'roles', [])):
+            filters.append(Assessment.public == True)
+        return filters
+
+    @staticmethod
+    def get(assessment_id):
+        return Assessment.query.filter(
+            *Assessment.get_filters(),
+            Assessment.id == assessment_id
+        ).one()
 
     def calculate_score(self, user_id):
         coding_question = Question.query.filter(
