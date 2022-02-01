@@ -31,6 +31,7 @@ class Feedback(BaseModel):
     state = db.Column(db.Enum(FeedbackState))
     build_url = db.Column(db.String)
     source_url = db.Column(db.String)
+    replit_url = db.Column(db.String)
 
     def __str__(self):
         return f'{self.proficiency}'

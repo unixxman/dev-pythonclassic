@@ -2,8 +2,7 @@ from flask import Blueprint, g
 from flask_jwt_extended import jwt_required
 from flask_apispec import use_kwargs, marshal_with
 from proftest import docs
-from proftest.models import Assessment, Question
-from proftest.models import Feedback
+from proftest.models import Assessment, Question, Feedback
 from proftest.users.utils import check_identity, set_claims
 from proftest.scm.handlers import GitJobHandler
 from .utils import get_proficiency
@@ -12,13 +11,15 @@ from proftest.schemas import (
     create_schema,
     AssessmentSchema,
     AssessmentDetailedSchema,
-    SubmissionSchema
+    SubmissionSchema,
+    FeedbackSchema
 )
 from proftest.base_view import BaseView
 
 assessment = Blueprint('assessment', __name__)
 ListSchema = create_schema(AssessmentSchema, many=True)
 DetailedSchema = create_schema(AssessmentDetailedSchema)
+PatchFeedbackSchema = create_schema(FeedbackSchema)
 
 
 class AssessmentListView(BaseView):
@@ -67,6 +68,17 @@ class AssessmentDetailedView(BaseView):
         if feedback:
             feedback.update(state='CANCELED')
         return '', 204
+
+    @jwt_required
+    @set_claims
+    @use_kwargs(FeedbackSchema(only=('replit_url',)))
+    @marshal_with(PatchFeedbackSchema)
+    def patch(self, assessment_id, **kwargs):
+        assessment = Assessment.get(assessment_id)
+        feedback = assessment.feedback
+        if feedback:
+            feedback.update(replit_url=kwargs.get('replit_url'))
+        return {'data': feedback}
 
 
 class SubmitView(BaseView):

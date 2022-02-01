@@ -7,6 +7,7 @@ class FeedbackSchema(Schema):
     state = fields.Method('get_state')
     build_url = fields.String()
     source_url = fields.String()
+    replit_url = fields.String()
 
     def get_proficiency(self, obj):
         return obj.proficiency.name
